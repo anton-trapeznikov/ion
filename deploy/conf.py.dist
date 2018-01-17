@@ -1,0 +1,4 @@
+WORK_DIR = '/home/ion/project'
+PYTHON_PATH = '/home/ion/.envs/ion/bin/python'
+USER = 'ion'
+USER_GROUP = 'ion'

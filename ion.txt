@@ -1,0 +1,16 @@
+RPI
+
+1) Подключение к монитору
+2) Подключение датчиков температуры
+3) Подключение клапана 220V и дозакуп недостающих деталей
+4)
+
+
+
+Снаббер
+
+#867
+https://forum.grainwine.info/index.php/topic/908-avtomatika-upravlenija-otborom-po-zhidkosti-na-o/page-44
+
+#879
+https://forum.grainwine.info/index.php/topic/908-avtomatika-upravlenija-otborom-po-zhidkosti-na-o/page-44
