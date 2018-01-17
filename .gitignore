@@ -1,0 +1,10 @@
+*.pyc
+*.py~
+files
+xapian_index
+whoosh_index
+www
+log
+.env
+local_settings.py
+__pycache__
