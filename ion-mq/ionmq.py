@@ -21,11 +21,12 @@ class IonMQBroker(object):
         if actions:
             self._redis.ltrim(REDIS_KEY['actions'], len(actions), -1)
             self._pull_listener_map()
-            for action in (json.loads(a.decode('utf-8')) for a in actions):
+
+            for a in map(lambda a: json.loads(a.decode('utf-8')), actions):
                 self._manage_subscription(
-                    active=action['action'] == 'subscribe',
-                    client=action['client'],
-                    channel=action['channel']
+                    active=a['action'] == 'subscribe',
+                    client=a['client'],
+                    channel=a['channel']
                 )
 
             self._remove_empty_channels()
@@ -35,7 +36,9 @@ class IonMQBroker(object):
         messages = self._redis.lrange(REDIS_KEY['outbox'], 0, -1) or []
         if messages:
             self._redis.ltrim(REDIS_KEY['outbox'], len(messages), -1)
-            for m in messages:
+
+            for m in map(lambda m: (m, json.loads(m.decode('utf-8'))),
+                         messages):
                 decoded_message = json.loads(m.decode('utf-8'))
                 subscribers = list(
                     self._listener_map[decoded_message['channel']]
