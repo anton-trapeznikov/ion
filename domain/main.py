@@ -1,5 +1,5 @@
-from sensors.ds18b20 import DS18B20
-#  import settings.config as config
+from settings import settings
+import importlib
 import argparse
 import sys
 
@@ -10,10 +10,19 @@ def main(argv):
                         type=str, required=True, help='Запускаемый сервис.')
     options = parser.parse_args(argv)
 
-    if options.service.lower() == 'ds18b20':
-        context = DS18B20()
-        context.run()
+    if options.service not in settings.SERVICE_MAP:
+        raise RuntimeError('%s service is unknown.' % options.service)
+
+    service_class = getattr(
+        importlib.import_module(
+            settings.SERVICE_MAP[options.service]['module']
+        ),
+        settings.SERVICE_MAP[options.service]['class']
+    )
+
+    context = service_class()
+    context.run()
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

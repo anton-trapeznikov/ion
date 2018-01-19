@@ -1,3 +1,4 @@
+from executors import conf
 import time
 
 
@@ -7,5 +8,5 @@ class DS18B20(object):
 
     def run(self):
         while True:
-            print('!')
+            print(conf.aaa)
             time.sleep(1)
