@@ -18,7 +18,9 @@ r = redis.Redis(connection_pool=pool)
 class Client(IonMQClient):
     def default_handler(self, message):
         message = json.loads(message)
-
+        print('==============')
+        print(message)
+        print('==============')
         print(
             "[x] I'm %s.Received %s. Channel %s from %s" % (
                 self.imq_client_id,
@@ -28,7 +30,7 @@ class Client(IonMQClient):
             )
         )
 
-
+print('!')
 tester_1 = Client(imq_client_id=id_1, redis=r)
 tester_2 = Client(imq_client_id=id_2, redis=r)
 tester_3 = Client(imq_client_id=id_3, redis=r)

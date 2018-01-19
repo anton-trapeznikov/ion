@@ -1,0 +1,5 @@
+setproctitle
+redis
+hiredis
+python-redis
+rq
