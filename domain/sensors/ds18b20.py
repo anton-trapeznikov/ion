@@ -1,34 +1,40 @@
 from service import ServiceContext
-import asyncio
-import signal
+from settings import config
+import glob
+import json
+import time
+import os
 
 
 class DS18B20(ServiceContext):
-    async def fetch(self, file_path):
-        print('[X] reading %s' % file_path)
-        with open(file_path) as f:
-            data = f.read()
-            print('[X] read %s' % data)
+    def __init__(self):
+        super(DS18B20, self).__init__()
 
-    def signal_handler(loop):
-        loop.remove_signal_handler(signal.SIGTERM)
-        loop.stop()
+        self.sensors = {}
+        pattern = os.path.join(config['1-WIRE_DEVICE_FOLDER'], '28-*')
+        for path in glob.glob(pattern):
+            sensor_id = os.path.basename(os.path.normpath(path))
+            self.sensors[sensor_id] = os.path.join(path, 'w1_slave')
+
+        self.can_work = True
+
+    def read_temperature(self, sensor_id):
+        result = None
+        with open(self.sensors[sensor_id]) as f:
+            cell = [l for l in f.readlines() if 't=' in l][0]
+            if cell:
+                result = cell.split('t=')[-1]
+
+        return result
 
     def start(self):
-        files = [
-            '/home/anton/devel/1.txt', '/home/anton/devel/3.txt',
-            '/home/anton/devel/2.txt', '/home/anton/devel/4.txt'
-        ]
-
-        loop = asyncio.get_event_loop()
-        loop.add_signal_handler(
-            signal.SIGTERM,
-            self.signal_handler,
-            loop
-        )
-
-        for f in files:
-            asyncio.async(self.fetch(file_path=f))
-
-        loop.run_forever()
-        loop.close()
+        while self.can_work:
+            for sensor_id in self.sensors:
+                self.publish(
+                    config.CHANNEL_MAP['ds18b20'],
+                    json.dumps({
+                        'timestamp': time.time(),
+                        'id': sensor_id,
+                        'value': self.read_temperature[sensor_id],
+                    }),
+                )

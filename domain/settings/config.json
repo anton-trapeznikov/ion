@@ -3,5 +3,7 @@
         "host": "localhost",
         "port": 6379,
         "db": 0
-    }
+    },
+    "1-WIRE_DEVICE_FOLDER": "/sys/bus/w1/devices/",
+    "DS18B2_FETCH_TIMEOUT": 0.75
 }

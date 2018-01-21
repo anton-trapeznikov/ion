@@ -12,6 +12,10 @@ if os.path.exists(json_config_file):
         for param, value in json_config.items():
             setattr(sys.modules[__name__], param, value)
 
+CHANNEL_MAP = {
+    'ds18b20': 'temperature',
+}
+
 SERVICE_MAP = {
     'ds18b20': {
         'module': 'sensors.ds18b20',
