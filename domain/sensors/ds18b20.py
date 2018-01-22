@@ -38,9 +38,9 @@ class DS18B20(ServiceContext):
                     json.dumps({
                         'timestamp': time.time(),
                         'id': sensor_id,
-                        'value': self.read_temperature[sensor_id],
+                        'value': self.read_temperature(sensor_id),
                     }),
                 )'''
-                print(sensor_id, self.read_temperature[sensor_id])
+                print(sensor_id, self.read_temperature(sensor_id))
 
             time.sleep(1)
