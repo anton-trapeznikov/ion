@@ -5,7 +5,6 @@
         "db": 0
     },
     "W1_DEVICE_FOLDER": "/sys/bus/w1/devices/",
-    "W1_DEVICE_FOLDER": "/home/anton/devel/bus/",
     "DS18B2_FETCH_DELAY": 0.75,
     "MQBROKER_LOOP_DELAY": 0.25
 }

@@ -1,5 +1,8 @@
 from service import ServiceContext
 from settings import config
+import aiofiles
+import asyncio
+import signal
 import glob
 import json
 import time
@@ -11,8 +14,6 @@ class DS18B20(ServiceContext):
         super(DS18B20, self).__init__()
 
         self.sensors = {}
-        print('-' * 20)
-        print(config.W1_DEVICE_FOLDER)
         pattern = os.path.join(config.W1_DEVICE_FOLDER, '28-*')
         for path in glob.glob(pattern):
             sensor_id = os.path.basename(os.path.normpath(path))
@@ -27,21 +28,55 @@ class DS18B20(ServiceContext):
             if cell:
                 result = cell.split('t=')[-1]
 
-        result = float(result) * 0.001 if result else None
-        return result
+        return float(result) * 0.001 if result else None
+
+    async def fetch_temperature(self):
+        while not self.queue.empty():
+            value = None
+            sensor_id = await self.queue.get()
+
+            async with aiofiles.open(self.sensors[sensor_id], mode='r') as f:
+                contents = await f.readlines()
+                cell_rows = [l for l in contents if 't=' in l]
+                if cell_rows:
+                    value = cell_rows[0].split('t=')[-1]
+
+            value = float(value) * 0.001 if value else None
+            print(sensor_id, value)
+
+            '''
+            self.publish(
+                config.CHANNEL_MAP['ds18b20'],
+                json.dumps({
+                    'timestamp': time.time(),
+                    'id': sensor_id,
+                    'value': self.read_temperature(sensor_id),
+                }),
+            )
+            '''
+            await asyncio.sleep(config.DS18B2_FETCH_DELAY)
+            if self.can_work:
+                self.queue.put_nowait(sensor_id)
+
+    def stop(self):
+        self.can_work = False
 
     def start(self):
-        while self.can_work:
-            for sensor_id in self.sensors:
-                '''
-                self.publish(
-                    config.CHANNEL_MAP['ds18b20'],
-                    json.dumps({
-                        'timestamp': time.time(),
-                        'id': sensor_id,
-                        'value': self.read_temperature(sensor_id),
-                    }),
-                )'''
-                print(sensor_id, self.read_temperature(sensor_id))
+        if not self.sensors:
+            return
 
-            time.sleep(1)
+        self.loop = asyncio.get_event_loop()
+
+        self.loop.add_signal_handler(signal.SIGINT, self.stop)
+        self.loop.add_signal_handler(signal.SIGTERM, self.stop)
+
+        self.queue, workers = asyncio.Queue(), []
+
+        for sensor_id in self.sensors:
+            self.queue.put_nowait(sensor_id)
+            workers.append(
+                asyncio.ensure_future(self.fetch_temperature())
+            )
+
+        self.loop.run_until_complete(asyncio.wait(workers))
+        self.loop.close()
