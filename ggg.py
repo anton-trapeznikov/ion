@@ -33,6 +33,7 @@ class Test(object):
             '/home/anton/devel/4.txt'
         ]
         self.loop = asyncio.get_event_loop()
+
         self.loop.add_signal_handler(signal.SIGINT, self.stop)
         self.loop.add_signal_handler(signal.SIGTERM, self.stop)
 

@@ -11,7 +11,9 @@ class DS18B20(ServiceContext):
         super(DS18B20, self).__init__()
 
         self.sensors = {}
-        pattern = os.path.join(config['1-WIRE_DEVICE_FOLDER'], '28-*')
+        print('-' * 20)
+        print(config.W1_DEVICE_FOLDER)
+        pattern = os.path.join(config.W1_DEVICE_FOLDER, '28-*')
         for path in glob.glob(pattern):
             sensor_id = os.path.basename(os.path.normpath(path))
             self.sensors[sensor_id] = os.path.join(path, 'w1_slave')
@@ -30,6 +32,7 @@ class DS18B20(ServiceContext):
     def start(self):
         while self.can_work:
             for sensor_id in self.sensors:
+                '''
                 self.publish(
                     config.CHANNEL_MAP['ds18b20'],
                     json.dumps({
@@ -37,4 +40,7 @@ class DS18B20(ServiceContext):
                         'id': sensor_id,
                         'value': self.read_temperature[sensor_id],
                     }),
-                )
+                )'''
+                print(sensor_id, self.read_temperature[sensor_id])
+
+            time.sleep(1)
