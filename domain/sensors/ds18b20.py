@@ -27,6 +27,7 @@ class DS18B20(ServiceContext):
             if cell:
                 result = cell.split('t=')[-1]
 
+        result = float(result) * 0.001 if result else None
         return result
 
     def start(self):
