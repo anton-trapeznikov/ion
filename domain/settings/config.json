@@ -7,7 +7,11 @@
 
     "W1_DEVICE_FOLDER": "/sys/bus/w1/devices/",
     "W1_DEVICE_FOLDER": "/home/anton/devel/bus/",
-    "DS18B20_FETCH_DELAY": 0.75,
-    "MQBROKER_LOOP_DELAY": 0.25,
-    "DEFAULT_LOOP_DELAY": 0.75
+
+    "DEFAULT_LOOP_DELAY": 0.75,
+
+    "MAX_VOLTAGE_REGULATOR_OUTPUT": 220,
+    "MIN_VOLTAGE_REGULATOR_OUTPUT": 40,
+    "VOLTAGE_REGULATOR": "rmvk",
+    "HEATER_RESISTANCE": 17
 }
