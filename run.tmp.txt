@@ -1,0 +1,22 @@
+stripping_run = {
+    'stages': ['heat', 'stabilization', 'on_self_work', 'foreshots', 'heads', 'hearts', 'tails']
+}
+
+
+run = {
+    'stages': {
+
+    }
+}
+
+
+Run
+    status: planned | working | waiting | canceled | executed
+
+    security: ok | not_ok
+
+    metrics:
+        sens-1:
+
+    state:
+        planned | work

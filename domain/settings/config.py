@@ -26,3 +26,9 @@ SERVICE_MAP = {
         'class': 'MQBroker',
     },
 }
+
+REDIS_KEY = {
+    'ds18b20_value': 'ion:ds18b20::',
+    'ds18b20_timestamp': 'ion:ds18b20::ts::',
+    'ds18b20_ids': 'ion:ds18b20::list'
+}

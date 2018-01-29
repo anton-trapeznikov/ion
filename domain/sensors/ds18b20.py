@@ -1,82 +1,42 @@
-from service import ServiceContext
+from service import DaemonContext
 from settings import config
-import aiofiles
-import asyncio
-import signal
-import glob
-import json
 import time
 import os
 
 
-class DS18B20(ServiceContext):
-    def __init__(self):
-        super(DS18B20, self).__init__()
+class DS18B20(DaemonContext):
+    def __init__(self, **kwargs):
+        self.sensor_id = kwargs.get('entry_id', '')
 
-        self.sensors = {}
-        pattern = os.path.join(config.W1_DEVICE_FOLDER, '28-*')
-        for path in glob.glob(pattern):
-            sensor_id = os.path.basename(os.path.normpath(path))
-            self.sensors[sensor_id] = os.path.join(path, 'w1_slave')
+        title = '%s-%s.d' % (self.default_process_title, self.sensor_id)
+        super(self.__class__, self).__init__(process_title=title)
 
-        self.can_work = True
+        self.data_file = os.path.join(
+            config.W1_DEVICE_FOLDER, self.sensor_id, 'w1_slave')
+        self.can_work = os.path.exists(self.data_file)
 
-    def read_temperature(self, sensor_id):
-        result = None
-        with open(self.sensors[sensor_id]) as f:
-            cell = [l for l in f.readlines() if 't=' in l][0]
-            if cell:
-                result = cell.split('t=')[-1]
+        self.redis_data_key = '%s%s' % (
+            config.REDIS_KEY['ds18b20_value'], self.sensor_id)
+        self.redis_timestamp_key = '%s%s' % (
+            config.REDIS_KEY['ds18b20_timestamp'], self.sensor_id)
+        self.redis_list_key = config.REDIS_KEY['ds18b20_ids']
+        self.redis.sadd(self.redis_list_key, self.sensor_id)
 
-        return float(result) * 0.001 if result else None
+    def payload(self):
+        value = ''
+        with open(self.data_file, mode='r') as f:
+            contents = f.readlines()
+            cell_rows = [l for l in contents if 't=' in l]
+            if cell_rows:
+                value = cell_rows[0].split('t=')[-1]
 
-    async def fetch_temperature(self):
-        while not self.queue.empty():
-            value = None
-            sensor_id = await self.queue.get()
+        value = float(value) * 0.001 if value else ''
 
-            async with aiofiles.open(self.sensors[sensor_id], mode='r') as f:
-                contents = await f.readlines()
-                cell_rows = [l for l in contents if 't=' in l]
-                if cell_rows:
-                    value = cell_rows[0].split('t=')[-1]
+        self.redis.set(self.redis_data_key, value)
+        self.redis.set(self.redis_timestamp_key, time.time())
 
-            value = float(value) * 0.001 if value else None
-            print(sensor_id, value)
-
-            '''
-            self.publish(
-                config.CHANNEL_MAP['ds18b20'],
-                json.dumps({
-                    'timestamp': time.time(),
-                    'id': sensor_id,
-                    'value': self.read_temperature(sensor_id),
-                }),
-            )
-            '''
-            await asyncio.sleep(config.DS18B2_FETCH_DELAY)
-            if self.can_work:
-                self.queue.put_nowait(sensor_id)
-
-    def stop(self):
-        self.can_work = False
-
-    def start(self):
-        if not self.sensors:
-            return
-
-        self.loop = asyncio.get_event_loop()
-
-        self.loop.add_signal_handler(signal.SIGINT, self.stop)
-        self.loop.add_signal_handler(signal.SIGTERM, self.stop)
-
-        self.queue, workers = asyncio.Queue(), []
-
-        for sensor_id in self.sensors:
-            self.queue.put_nowait(sensor_id)
-            workers.append(
-                asyncio.ensure_future(self.fetch_temperature())
-            )
-
-        self.loop.run_until_complete(asyncio.wait(workers))
-        self.loop.close()
+    def clean(self):
+        self.redis.delete(self.redis_data_key)
+        self.redis.delete(self.redis_timestamp_key)
+        self.redis.spop(self.redis_list_key)
+        super(self.__class__, self).clean()
